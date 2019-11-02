@@ -10,7 +10,7 @@
 
 #include <SoftwareSerial.h>                           //we have to include the SoftwareSerial library, or else we can't use it
 
-//Testing port definitions
+//Testing pin assignments
 //Arduino RX: 2
 //Arduino TX: 3
 
