@@ -8,9 +8,25 @@
 //This code was last tested 6/2019
 
 
+
 #include <SoftwareSerial.h>                           //we have to include the SoftwareSerial library, or else we can't use it
-#define rx 2                                          //define what pin rx is going to be
-#define tx 3                                          //define what pin tx is going to be
+
+//Testing pin assignments
+//Arduino RX: 2
+//Arduino TX: 3
+
+//Rx port of circuit connects to tx port of Arduino
+//Wire circuit rx port to Arduino Digital Pin 3
+
+//Tx port of circuit connects to rx port of Arduino
+//Wire circuit tx port to Arduino Digital Pin 2
+
+//define what pin rx is going to be
+#define rx 2
+
+//define what pin tx is going to be
+#define tx 3
+
 
 SoftwareSerial myserial(rx, tx);                      //define how the soft serial port is going to work
 
