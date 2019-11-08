@@ -11,16 +11,6 @@
 
 #include <SoftwareSerial.h>                           //we have to include the SoftwareSerial library, or else we can't use it
 
-//Testing pin assignments
-//Arduino RX: 7
-//Arduino TX: 8
-
-//Rx port of circuit connects to tx port of Arduino
-//Wire circuit rx port to Arduino Digital Pin 3
-
-//Tx port of circuit connects to rx port of Arduino
-//Wire circuit tx port to Arduino Digital Pin 2
-
 //define what pin rx is going to be
 #define rx 7
 
