@@ -7,6 +7,11 @@
 #include <Arduino.h>
 #include <HardwareSerial.h>
 
+
+#ifdef DEBUG
+#include <assert.h>
+#endif
+
 /// let's base this off the NMEA way of handling messages
 
 
@@ -31,7 +36,7 @@ typedef struct {
 class UART_Receiver 
 {
     public:
-        void get_message(message &target);
+        uint8_t get_message(message &target);
         uint8_t get_port();
         uint8_t is_init();
         void flush();

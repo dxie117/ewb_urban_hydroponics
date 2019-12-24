@@ -1,6 +1,10 @@
 
 #include "receiver.h"
 
+
+
+
+
 const char* cmds[] = {"GET", "PUT"};
 const char* devices[] = {"TEMP", "PH", "LED"};
 
@@ -49,6 +53,10 @@ int UART_Receiver::begin()
         return -1;
     }
     UART_obj->begin(mBaud);
+    mInit = 1;
+    #ifdef DEBUG
+        UART_obj->println("RECEIVER INITIALIZED");
+    #endif
     return 0;
 }
 
@@ -66,42 +74,65 @@ uint8_t UART_Receiver::available() {
     return UART_obj->available();
 }
 
-void UART_Receiver::get_message(message &target)
+uint8_t UART_Receiver::get_message(message &target)
 {
     #ifdef DEBUG
         int got_cmd = 0;
         int got_device = 0;
     #endif
     char buf[MAX_BUF_LEN];
+    buf[0] = '\0';
     size_t len = 0;
     do {
         len = UART_obj->readBytesUntil('\n', buf, MAX_BUF_LEN); // receive a message
     } while (buf[0] != '$');
-    buf[len - 1] = '\0'; // properly NULL-terminate string
+    buf[len] = '\0'; // properly NULL-terminate string
+    #ifdef DEBUG
+        UART_obj->print("FULL MSG: ");
+        UART_obj->println(buf);
+    #endif
     char *substr = strtok(buf, " ");
     #ifndef DEBUG
-        match_cmd(substr, target);
+        if (!match_cmd(substr + 1, target)) {
+            return 0; // need to omit leading $
+        }        
     #else
-        got_cmd = !match_cmd(substr, target);
+        got_cmd = match_cmd(substr + 1, target);
+        UART_obj->print("CMD: ");
+        UART_obj->println(substr);
         if (!got_cmd) {
+            UART_obj->println("UNABLE TO MATCH COMMAND");
+            delay(100);
             assert(0);
         }
+
     #endif
     substr = strtok(NULL, " ");
     
     #ifndef DEBUG
-        match_device(substr, target);
+        if (!match_device(substr, target)) {
+            return 0;
+        };
     #else
-        got_device = !match_device(substr, target);
+        got_device = match_device(substr, target);
+        UART_obj->print("DEVICE: ");
+        UART_obj->println(substr);
         if (!got_device) {
+            UART_obj->println("UNABLE TO MATCH DEVICE");
+            delay(100);
             assert(0);
         }
+
     #endif
     substr = strtok(NULL, " ");
     if (substr != nullptr) { // how to handle \n, it's fine
+        #ifdef DEBUG
+            UART_obj->print("PARAMETER: ");
+            UART_obj->println(substr);
+        #endif
         target.param = atoi(substr);
     }
-    return; 
+    return 1; 
 }
 
 uint8_t UART_Receiver::match_cmd(char *substr, message &target)
@@ -109,10 +140,10 @@ uint8_t UART_Receiver::match_cmd(char *substr, message &target)
     for (int i = 0; i < NUM_CMDS; i++) {
         if (strcmp(substr, cmds[i]) == 0) {
             target.cmd = static_cast<cmd_type>(i);
-            return 0;
+            return 1;
         }
     }
-    return 1;
+    return 0;
 }
 
 uint8_t UART_Receiver::match_device(char *substr, message &target)
@@ -120,9 +151,9 @@ uint8_t UART_Receiver::match_device(char *substr, message &target)
     for (int i = 0; i < NUM_DEVICES; i++) {
         if (strcmp(substr, devices[i]) == 0) {
             target.device = static_cast<device_type>(i);
-            return 0;
+            return 1;
         }
     }
-    return 1;
+    return 0;
 }
 
