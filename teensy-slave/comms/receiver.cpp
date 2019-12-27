@@ -3,15 +3,22 @@
 
 
 
-
+uint32_t mod(uint32_t x, uint32_t mod) {
+    while (x >= mod) {
+        x -= mod;
+    }
+    return x;
+}
 
 const char* cmds[] = {"GET", "PUT"};
 const char* devices[] = {"TEMP", "PH", "LED"};
 
-UART_Receiver::UART_Receiver(uint8_t port, uint16_t baud)
+UART_Receiver::UART_Receiver(uint8_t port, uint32_t baud)
 {
     mBaud = baud;
     mUART_port = port;
+    mInit = 0;
+    mQueue = Queue();
     switch (port) {
         case 0:
             UART_obj = &Serial;
@@ -80,18 +87,15 @@ uint8_t UART_Receiver::get_message(message &target)
         int got_cmd = 0;
         int got_device = 0;
     #endif
-    char buf[MAX_BUF_LEN];
-    buf[0] = '\0';
-    size_t len = 0;
-    do {
-        len = UART_obj->readBytesUntil('\n', buf, MAX_BUF_LEN); // receive a message
-    } while (buf[0] != '$');
-    buf[len] = '\0'; // properly NULL-terminate string
+    if (mQueue.is_empty()) {
+        return 0;
+    }
+    char *msg = static_cast<char*>(mQueue.deq());
     #ifdef DEBUG
         UART_obj->print("FULL MSG: ");
-        UART_obj->println(buf);
+        UART_obj->println(msg);
     #endif
-    char *substr = strtok(buf, " ");
+    char *substr = strtok(msg, " ");
     #ifndef DEBUG
         if (!match_cmd(substr + 1, target)) {
             return 0; // need to omit leading $
@@ -157,3 +161,25 @@ uint8_t UART_Receiver::match_device(char *substr, message &target)
     return 0;
 }
 
+void UART_Receiver::listen()
+{
+    while (UART_obj->available()) {
+        char c = static_cast<char>(UART_obj->read());
+        rx_buf[rx_ind] = c;
+        rx_ind++;
+        if (c == '\n') {
+            rx_buf[rx_ind-1] = '\0'; // null terminate, trim \n
+            if (rx_buf[0] == '$') {
+                // well-formed message
+                char *msg = new char[rx_ind]();
+                strcpy(msg, rx_buf);
+                mQueue.enq(static_cast<void*>(msg));
+                #ifdef DEBUG
+                    UART_obj->println("NEW MESSAGE RECEIVED.");
+                #endif
+            }
+            // not well-formed, just write over what's in the buffer
+            rx_ind = 0;
+        }
+    }
+}

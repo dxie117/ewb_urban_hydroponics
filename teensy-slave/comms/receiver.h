@@ -3,11 +3,13 @@
 #define MAX_BUF_LEN 25
 #define NUM_CMDS 2
 #define NUM_DEVICES 3
+#define UART_BUF_LEN 32
 
 #include <Arduino.h>
 #include <HardwareSerial.h>
+#include "queues.h"
 
-
+#define DEBUG
 #ifdef DEBUG
 #include <assert.h>
 #endif
@@ -43,15 +45,19 @@ class UART_Receiver
         int begin();
         void end();
         uint8_t available();
-        UART_Receiver(uint8_t port, uint16_t baud);
+        void listen();
+        UART_Receiver(uint8_t port, uint32_t baud);
 
     private:
+        char rx_buf[UART_BUF_LEN];
+        uint32_t rx_ind;
         uint8_t mUART_port;
         uint8_t mInit;
         HardwareSerial *UART_obj;
-        uint16_t mBaud;
+        uint32_t mBaud;
+        Queue mQueue;
         uint8_t match_cmd(char *substr, message &target);
-        uint8_t match_device(char *substr, message &target);
+        uint8_t match_device(char *substr, message &target); // gonna not handle the case where buffer loops around...
 };
 
 
