@@ -1,28 +1,22 @@
-enum inputs {
-  GET
-}
+#include <Arduino.h>
+#include <HardwareSerial.h>
 
-enum commands {
-  single,
-  sleep,
-  continuous_on,
-  continuous_off
-}
-
-
-class temp_sensor
+class TEMP_Sensor
 {
-  private:
-    
-  public:
-    int reading;
-    void get_message(char *msg);
+    public:
+        TEMP_Sensor(uint8_t port, uint32_t baud);
+        float get_temp();
+        void set_single_read();
+        void setup();
 
-    temp_sensor(uint32_t port, uint32_t rate);
+    private:
+        char *sensordata = "";
+        bool sensor_data_complete = false;
+        uint32_t temp_port;
+        uint32_t temp_baud;
 
+        uint8_t rx;
+        uint8_t tx;
 
-    void execute();
-
-    void send_command(char *command);
-
-}
+        int read_temp(float *temperature);
+};
